@@ -1,0 +1,6 @@
+LIBRARY   qr
+EXPORTS
+    qr_create @1
+    qr_cast @2
+    qr_set_value @3
+    qr_register @4
