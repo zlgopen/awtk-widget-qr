@@ -177,9 +177,3 @@ widget_t* qr_cast(widget_t* widget) {
 
   return widget;
 }
-
-#include "base/widget_factory.h"
-
-ret_t qr_register(void) {
-  return widget_factory_register(widget_factory(), WIDGET_TYPE_QR, qr_create);
-}

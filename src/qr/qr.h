@@ -102,16 +102,6 @@ widget_t* qr_cast(widget_t* widget);
  */
 ret_t qr_set_value(widget_t* widget, const char* value);
 
-/**
- * @method  qr_register
- * 注册控件。
- *
- * @annotation ["scriptable", "static"]
- *
- * @return {ret_t} 返回RET_OK表示成功，否则表示失败。
- */
-ret_t qr_register(void);
-
 #define WIDGET_TYPE_QR "qr"
 #define QR_STATE_SCANED "scanned"
 #define QR(widget) ((qr_t*)(qr_cast(WIDGET(widget))))

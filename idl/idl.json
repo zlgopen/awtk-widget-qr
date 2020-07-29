@@ -1,5 +1,20 @@
 [
   {
+    "params": [],
+    "annotation": {
+      "global": true
+    },
+    "desc": "注册控件。",
+    "name": "qr_register",
+    "return": {
+      "type": "ret_t",
+      "desc": "返回RET_OK表示成功，否则表示失败。"
+    },
+    "type": "method",
+    "header": "src/qr_register.h",
+    "level": 1
+  },
+  {
     "type": "class",
     "methods": [
       {
@@ -78,19 +93,6 @@
         },
         "desc": "设置要转成二维码的字符串。",
         "name": "qr_set_value",
-        "return": {
-          "type": "ret_t",
-          "desc": "返回RET_OK表示成功，否则表示失败。"
-        }
-      },
-      {
-        "params": [],
-        "annotation": {
-          "scriptable": true,
-          "static": true
-        },
-        "desc": "注册控件。",
-        "name": "qr_register",
         "return": {
           "type": "ret_t",
           "desc": "返回RET_OK表示成功，否则表示失败。"
