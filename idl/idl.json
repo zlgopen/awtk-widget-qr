@@ -100,7 +100,7 @@
           {
             "type": "const char*",
             "name": "value",
-            "desc": "格式字符串。。"
+            "desc": "格式字符串。"
           }
         ],
         "annotation": {

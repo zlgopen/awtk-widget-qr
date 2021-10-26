@@ -98,7 +98,7 @@ widget_t* qr_cast(widget_t* widget);
  * 设置要转成二维码的字符串。
  * @annotation ["scriptable"]
  * @param {widget_t*} widget widget对象。
- * @param {const char*} value 格式字符串。。
+ * @param {const char*} value 格式字符串。
  *
  * @return {ret_t} 返回RET_OK表示成功，否则表示失败。
  */

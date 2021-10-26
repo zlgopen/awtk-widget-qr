@@ -23,6 +23,9 @@
 #include "tkc/utils.h"
 
 #include "qr.h"
+
+#define IMAGE_QR_MAX_RATIO 0.45f /* 贴图的面积和二维码的面积最大比例 */
+
 static ret_t qr_ensure_qrcode(widget_t* widget);
 
 ret_t qr_set_value(widget_t* widget, const char* value) {
@@ -36,7 +39,7 @@ ret_t qr_set_value(widget_t* widget, const char* value) {
     qr->qrcode = NULL;
   }
 
-  return (qr_ensure_qrcode(qr) == RET_OK) ? widget_invalidate(qr, NULL) : RET_FAIL;
+  return (qr_ensure_qrcode(widget) == RET_OK) ? widget_invalidate(widget, NULL) : RET_FAIL;
 }
 
 static ret_t qr_get_prop(widget_t* widget, const char* name, value_t* v) {
@@ -115,6 +118,7 @@ static ret_t qr_on_paint_self(widget_t* widget, canvas_t* c) {
     uint32_t margin = style_get_int(style, STYLE_ID_MARGIN, 2);
     color_t bg = style_get_color(style, STYLE_ID_BG_COLOR, trans);
     color_t fg = style_get_color(style, STYLE_ID_FG_COLOR, trans);
+    const char* bg_img = style_get_str(style, STYLE_ID_BG_IMAGE, NULL);
 
     if (qr_ensure_qrcode(widget) == RET_OK) {
       uint32_t i = 0;
@@ -124,6 +128,7 @@ static ret_t qr_on_paint_self(widget_t* widget, canvas_t* c) {
       uint32_t pix_size = (tk_min(widget->w, widget->h) - 2 * margin) / size;
       uint32_t x = (widget->w - pix_size * size) / 2;
       uint32_t y = (widget->h - pix_size * size) / 2;
+      bitmap_t img = {0};
 
       return_value_if_fail(pix_size > 1, RET_BAD_PARAMS);
 
@@ -140,6 +145,20 @@ static ret_t qr_on_paint_self(widget_t* widget, canvas_t* c) {
           x += pix_size;
         }
         y += pix_size;
+      }
+
+      if (bg_img != NULL && widget_load_image(widget, bg_img, &img) == RET_OK) {
+        vgcanvas_t* vg = canvas_get_vgcanvas(c);
+        rectf_t clip_r = rectf_init(widget->x + ((1 - IMAGE_QR_MAX_RATIO) / 2.0f) * widget->w,
+                                    widget->y + ((1 - IMAGE_QR_MAX_RATIO) / 2.0f) * widget->h,
+                                    IMAGE_QR_MAX_RATIO * widget->w, IMAGE_QR_MAX_RATIO * widget->h);
+
+        vgcanvas_save(vg);
+        vgcanvas_clip_rect(vg, clip_r.x, clip_r.y, clip_r.w, clip_r.h);
+        vgcanvas_translate(vg, c->ox + (widget->w - img.w) / 2.0f,
+                           c->oy + (widget->h - img.h) / 2.0f);
+        vgcanvas_draw_image(vg, &img, 0, 0, img.w, img.h, 0, 0, img.w, img.h);
+        vgcanvas_restore(vg);
       }
     }
   }
