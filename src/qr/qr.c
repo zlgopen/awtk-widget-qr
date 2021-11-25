@@ -21,6 +21,7 @@
 
 #include "tkc/mem.h"
 #include "tkc/utils.h"
+#include "base/widget_vtable.h"
 
 #include "qr.h"
 
@@ -89,7 +90,6 @@ static ret_t qr_on_destroy(widget_t* widget) {
 
 static ret_t qr_ensure_qrcode(widget_t* widget) {
   qr_t* qr = QR(widget);
-  uint8_t* qrcodeBytes = NULL;
   int32_t size = tk_min(widget->w, widget->h) - 5;
 
   if (size < MIN_SIZE) {
@@ -109,6 +109,22 @@ static ret_t qr_ensure_qrcode(widget_t* widget) {
   return RET_FAIL;
 }
 
+static ret_t qr_paint_logo(widget_t* widget, canvas_t* c) {
+  vgcanvas_t* vg = canvas_get_vgcanvas(c);
+  const char* logo_name = NULL;
+  bitmap_t logo = {0};
+  return_value_if_fail(widget != NULL && vg != NULL, RET_BAD_PARAMS);
+
+  logo_name = style_get_str(widget->astyle, STYLE_ID_BG_IMAGE, NULL);
+
+  if (logo_name != NULL && widget_load_image(widget, logo_name, &logo) == RET_OK) {
+    vgcanvas_translate(vg, c->ox + (widget->w - logo.w) / 2.0f,
+                       c->oy + (widget->h - logo.h) / 2.0f);
+    vgcanvas_draw_image(vg, &logo, 0, 0, logo.w, logo.h, 0, 0, logo.w, logo.h);
+  }
+  return RET_OK;
+}
+
 static ret_t qr_on_paint_self(widget_t* widget, canvas_t* c) {
   qr_t* qr = QR(widget);
   style_t* style = widget->astyle;
@@ -118,7 +134,6 @@ static ret_t qr_on_paint_self(widget_t* widget, canvas_t* c) {
     uint32_t margin = style_get_int(style, STYLE_ID_MARGIN, 2);
     color_t bg = style_get_color(style, STYLE_ID_BG_COLOR, trans);
     color_t fg = style_get_color(style, STYLE_ID_FG_COLOR, trans);
-    const char* bg_img = style_get_str(style, STYLE_ID_BG_IMAGE, NULL);
 
     if (qr_ensure_qrcode(widget) == RET_OK) {
       uint32_t i = 0;
@@ -128,7 +143,9 @@ static ret_t qr_on_paint_self(widget_t* widget, canvas_t* c) {
       uint32_t pix_size = (tk_min(widget->w, widget->h) - 2 * margin) / size;
       uint32_t x = (widget->w - pix_size * size) / 2;
       uint32_t y = (widget->h - pix_size * size) / 2;
-      bitmap_t img = {0};
+      rect_t r_clip = rect_init(widget->x + ((1 - IMAGE_QR_MAX_RATIO) / 2.0f) * widget->w,
+                                widget->y + ((1 - IMAGE_QR_MAX_RATIO) / 2.0f) * widget->h,
+                                IMAGE_QR_MAX_RATIO * widget->w, IMAGE_QR_MAX_RATIO * widget->h);
 
       return_value_if_fail(pix_size > 1, RET_BAD_PARAMS);
 
@@ -147,19 +164,7 @@ static ret_t qr_on_paint_self(widget_t* widget, canvas_t* c) {
         y += pix_size;
       }
 
-      if (bg_img != NULL && widget_load_image(widget, bg_img, &img) == RET_OK) {
-        vgcanvas_t* vg = canvas_get_vgcanvas(c);
-        rectf_t clip_r = rectf_init(widget->x + ((1 - IMAGE_QR_MAX_RATIO) / 2.0f) * widget->w,
-                                    widget->y + ((1 - IMAGE_QR_MAX_RATIO) / 2.0f) * widget->h,
-                                    IMAGE_QR_MAX_RATIO * widget->w, IMAGE_QR_MAX_RATIO * widget->h);
-
-        vgcanvas_save(vg);
-        vgcanvas_clip_rect(vg, clip_r.x, clip_r.y, clip_r.w, clip_r.h);
-        vgcanvas_translate(vg, c->ox + (widget->w - img.w) / 2.0f,
-                           c->oy + (widget->h - img.h) / 2.0f);
-        vgcanvas_draw_image(vg, &img, 0, 0, img.w, img.h, 0, 0, img.w, img.h);
-        vgcanvas_restore(vg);
-      }
+      widget_paint_with_clip(widget, &r_clip, c, qr_paint_logo);
     }
   }
 
