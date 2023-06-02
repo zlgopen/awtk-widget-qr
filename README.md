@@ -69,7 +69,7 @@ scons LINUX_FB=true
 
 ## 如何使用二维码控件
 
-### 一、设置需要转成二维码的字符串
+### 设置需要转成二维码的字符串
 
 qr 控件 `value` 属性内容就是转成二维码的字符串内容。
 
@@ -91,7 +91,7 @@ qr_set_value(qr, "https://github.com/zlgopen/awtk");
 
 按照上述例子设置完成后，用手机扫该二维码就会打开[ https://github.com/zlgopen/awtk ](https://github.com/zlgopen/awtk)网址。
 
-### 二、设置二维码中的颜色与图片
+### 设置二维码中的颜色与图片
 
 添加图片资源到项目中：
 
@@ -131,6 +131,12 @@ qr_set_value(qr, "https://github.com/zlgopen/awtk");
 得到的二维码：
 
 ![](./docs/images/clip_image.png)
+
+qr 控件的属性名及作用如下表所示：
+
+| 属性名 | 作用                   |
+| ------ | ---------------------- |
+| value  | 要转换为二维码的字符串 |
 
 ## 文档
 
