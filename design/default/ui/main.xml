@@ -1,5 +1,5 @@
 <window theme="main">
-  <qr name="qr" x="c" y="30" w="240" h="240" value="https://github.com/zlgopen/awtk"/>
+  <qr name="qr" x="c" y="10" w="400" h="400" value="https://github.com/zlgopen/awtk"/>
 
   <combo_box x="c" y="b:110" w="80%" h="30" name="mode" readonly="true" 
     options="number;alphanumeric;byte;text" value="3"/>
