@@ -29,11 +29,23 @@
 
 static ret_t qr_ensure_qrcode(widget_t* widget);
 
-ret_t qr_set_value(widget_t* widget, const char* value) {
+static QRencodeMode qr_mode_from_text(const char* text) {
+  if (tk_str_eq(text, "numeric")) {
+    return QR_MODE_NUM;
+  } else if (tk_str_eq(text, "alphanumeric")) {
+    return QR_MODE_AN;
+  } else if (tk_str_eq(text, "byte")) {
+    return QR_MODE_8;
+  } else if (tk_str_eq(text, "text")) {
+    return QR_MODE_KANJI;
+  } else {
+    return QR_MODE_KANJI;
+  }
+}
+
+static ret_t qr_update(widget_t* widget) {
   qr_t* qr = QR(widget);
   return_value_if_fail(qr != NULL, RET_BAD_PARAMS);
-
-  qr->value = tk_str_copy(qr->value, value);
 
   if (qr->qrcode != NULL) {
     QRcode_free(qr->qrcode);
@@ -43,12 +55,33 @@ ret_t qr_set_value(widget_t* widget, const char* value) {
   return (qr_ensure_qrcode(widget) == RET_OK) ? widget_invalidate(widget, NULL) : RET_FAIL;
 }
 
+ret_t qr_set_value(widget_t* widget, const char* value) {
+  qr_t* qr = QR(widget);
+  return_value_if_fail(qr != NULL, RET_BAD_PARAMS);
+
+  qr->value = tk_str_copy(qr->value, value);
+
+  return qr_update(widget);
+}
+
+ret_t qr_set_mode(widget_t* widget, const char* mode) {
+  qr_t* qr = QR(widget);
+  return_value_if_fail(qr != NULL, RET_BAD_PARAMS);
+
+  qr->mode = tk_str_copy(qr->mode, mode);
+
+  return qr_update(widget);
+}
+
 static ret_t qr_get_prop(widget_t* widget, const char* name, value_t* v) {
   qr_t* qr = QR(widget);
   return_value_if_fail(qr != NULL && name != NULL && v != NULL, RET_BAD_PARAMS);
 
   if (tk_str_eq(WIDGET_PROP_VALUE, name) || tk_str_eq(WIDGET_PROP_TEXT, name)) {
     value_set_str(v, qr->value);
+    return RET_OK;
+  } else if (tk_str_eq(QR_PROP_MODE, name)) {
+    value_set_str(v, qr->mode);
     return RET_OK;
   }
 
@@ -68,6 +101,9 @@ static ret_t qr_set_prop(widget_t* widget, const char* name, const value_t* v) {
     }
 
     return RET_OK;
+  } else if (tk_str_eq(QR_PROP_MODE, name)) {
+    qr_set_mode(widget, value_str(v));
+    return RET_OK;
   }
 
   return RET_NOT_FOUND;
@@ -77,6 +113,7 @@ static ret_t qr_on_destroy(widget_t* widget) {
   qr_t* qr = QR(widget);
   return_value_if_fail(widget != NULL && qr != NULL, RET_BAD_PARAMS);
 
+  TKMEM_FREE(qr->mode);
   TKMEM_FREE(qr->value);
   if (qr->qrcode != NULL) {
     QRcode_free(qr->qrcode);
@@ -90,7 +127,9 @@ static ret_t qr_on_destroy(widget_t* widget) {
 
 static ret_t qr_ensure_qrcode(widget_t* widget) {
   qr_t* qr = QR(widget);
+  QRencodeMode mode = QR_MODE_8;
   int32_t size = tk_min(widget->w, widget->h) - 5;
+  return_value_if_fail(qr != NULL, RET_BAD_PARAMS);
 
   if (size < MIN_SIZE) {
     return RET_FAIL;
@@ -100,7 +139,8 @@ static ret_t qr_ensure_qrcode(widget_t* widget) {
     return RET_OK;
   }
 
-  qr->qrcode = QRcode_encodeString(qr->value, 3, QR_ECLEVEL_H, QR_MODE_8, 1);
+  mode = qr_mode_from_text(qr->mode);
+  qr->qrcode = QRcode_encodeString(qr->value, 3, QR_ECLEVEL_H, mode, 1);
 
   if (qr->qrcode != NULL) {
     return RET_OK;

@@ -12,12 +12,31 @@ static ret_t on_scanned(const timer_info_t* info) {
   widget_t* win = WIDGET(info->ctx);
   widget_t* qr = widget_lookup_by_type(win, WIDGET_TYPE_QR, TRUE);
 
-/*
+  /*
  * 自定义状态对designer不太友好，所以用disable状态模拟scanned状态。
  */
   widget_set_enable(qr, FALSE);
 
   return RET_REMOVE;
+}
+
+static ret_t on_update(void* ctx, event_t* e) {
+  char str[2048] = {0};
+  char smode[32] = {0};
+  widget_t* win = WIDGET(ctx);
+  widget_t* data = widget_lookup(win, "data", TRUE);
+  widget_t* qr = widget_lookup(win, "qr", TRUE);
+  widget_t* mode = widget_lookup(win, "mode", TRUE);
+
+  widget_get_text_utf8(mode, smode, sizeof(smode) - 1);
+  widget_get_text_utf8(data, str, sizeof(str) - 1);
+
+  log_debug("mode=%s data=%s\n", smode, str);
+  qr_set_mode(qr, smode);
+  qr_set_value(qr, str);
+  widget_set_enable(qr, TRUE);
+
+  return RET_OK;
 }
 
 /**
@@ -27,8 +46,9 @@ ret_t application_init(void) {
   qr_register();
 
   widget_t* win = window_open("main");
+  widget_child_on(win, "update", EVT_CLICK, on_update, win);
   widget_child_on(win, "close", EVT_CLICK, on_close, win);
-  widget_add_timer(win, on_scanned, 3000);
+  widget_add_timer(win, on_scanned, 5000);
 
   return RET_OK;
 }

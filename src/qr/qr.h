@@ -65,6 +65,13 @@ typedef struct _qr_t {
    */
   char* value;
 
+  /**
+   * @property {char*} mode
+   * @annotation ["set_prop","get_prop","readable","persitent","design","scriptable"]
+   * 二维码的模式。取值：number、alphanumeric、byte、text。
+   */
+  char* mode;
+
   /*private*/
   QRcode* qrcode;
 } qr_t;
@@ -104,8 +111,21 @@ widget_t* qr_cast(widget_t* widget);
  */
 ret_t qr_set_value(widget_t* widget, const char* value);
 
+/**
+ * @method qr_set_mode
+ * 设置二维码的模式。
+ * @annotation ["scriptable"]
+ * @param {widget_t*} widget widget对象。
+ * @param {const char*} mode 二维码的模式。
+ *
+ * @return {ret_t} 返回RET_OK表示成功，否则表示失败。
+ */
+ret_t qr_set_mode(widget_t* widget, const char* mode);
+
 #define WIDGET_TYPE_QR "qr"
 #define QR(widget) ((qr_t*)(qr_cast(WIDGET(widget))))
+
+#define QR_PROP_MODE "mode"
 
 /*public for subclass and runtime type check*/
 TK_EXTERN_VTABLE(qr);

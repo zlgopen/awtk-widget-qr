@@ -32,3 +32,5 @@ bin/hello*
 .vs
 *.os
 res
+idl/idl.json
+src/qr.def
