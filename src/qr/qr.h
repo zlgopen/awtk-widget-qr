@@ -74,6 +74,8 @@ typedef struct _qr_t {
 
   /*private*/
   QRcode* qrcode;
+
+  bitmap_t* cache;
 } qr_t;
 
 /**

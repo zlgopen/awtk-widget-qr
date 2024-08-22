@@ -21,6 +21,7 @@
 
 #include "tkc/mem.h"
 #include "tkc/utils.h"
+#include "base/canvas_offline.h"
 #include "base/widget_vtable.h"
 
 #include "qr.h"
@@ -50,6 +51,11 @@ static ret_t qr_update(widget_t* widget) {
   if (qr->qrcode != NULL) {
     QRcode_free(qr->qrcode);
     qr->qrcode = NULL;
+  }
+
+  if (qr->cache != NULL) {
+    bitmap_destroy(qr->cache);
+    qr->cache = NULL;
   }
 
   return (qr_ensure_qrcode(widget) == RET_OK) ? widget_invalidate(widget, NULL) : RET_FAIL;
@@ -119,6 +125,11 @@ static ret_t qr_on_destroy(widget_t* widget) {
     QRcode_free(qr->qrcode);
     qr->qrcode = NULL;
   }
+  
+  if (qr->cache != NULL) {
+    bitmap_destroy(qr->cache);
+    qr->cache = NULL;
+  }
 
   return RET_OK;
 }
@@ -165,7 +176,7 @@ static ret_t qr_paint_logo(widget_t* widget, canvas_t* c) {
   return RET_OK;
 }
 
-static ret_t qr_on_paint_self(widget_t* widget, canvas_t* c) {
+static ret_t qr_draw(widget_t* widget, canvas_t* c) {
   qr_t* qr = QR(widget);
   style_t* style = widget->astyle;
 
@@ -206,6 +217,48 @@ static ret_t qr_on_paint_self(widget_t* widget, canvas_t* c) {
 
       widget_paint_with_clip(widget, &r_clip, c, qr_paint_logo);
     }
+  }
+
+  return RET_OK;
+}
+
+static ret_t qr_create_cache(widget_t* widget, canvas_t* c) {
+  rect_t r = {0};
+  qr_t* qr = QR(widget);
+  canvas_t* canvas = NULL;
+  bitmap_t* img = TKMEM_ZALLOC(bitmap_t);
+
+  if (img != NULL) {
+    img->should_free_handle = TRUE;
+    canvas = canvas_offline_create(widget->w, widget->h, lcd_get_desired_bitmap_format(c->lcd));
+
+    r = rect_init(0, 0, widget->w, widget->h);
+    canvas_offline_begin_draw(canvas);
+    canvas_set_clip_rect(canvas, &r);
+    qr_draw(widget, canvas);
+    canvas_offline_end_draw(canvas);
+    ENSURE(canvas_offline_bitmap_move_to_new_bitmap(canvas, img) == RET_OK);
+    ENSURE(canvas_offline_destroy(canvas) == RET_OK);
+
+    qr->cache = img;
+  }
+
+  return RET_OK;
+}
+
+static ret_t qr_on_paint_self(widget_t* widget, canvas_t* c) {
+  qr_t* qr = QR(widget);
+  return_value_if_fail(qr != NULL, RET_BAD_PARAMS);
+
+  if (qr->cache == NULL) {
+    qr_create_cache(widget, c);
+  }
+
+  if (qr->cache != NULL) {
+    rect_t src = rect_init(0, 0, qr->cache->w, qr->cache->h);
+    rect_t dst = rect_init(0, 0, widget->w, widget->h);
+
+    canvas_draw_image(c, qr->cache, &src, &dst);
   }
 
   return RET_OK;
